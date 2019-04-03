@@ -534,7 +534,14 @@ int liberar_inodo(unsigned int ninodo)
 	struct superbloque SB;
 	int numBloquesLiberados;
 
+	clock_t t;
+	t = clock();
 	numBloquesLiberados = liberar_bloques_inodo(ninodo, 0);
+	t = clock() - t;
+	double time_taken = ((double)t) / CLOCKS_PER_SEC; // in seconds
+
+	printf("liberar_bloques_inodo() took %f seconds to execute \n", time_taken);
+
 	if (numBloquesLiberados == -1)
 		return -1;
 	leer_inodo(ninodo, &inodo);
@@ -544,10 +551,6 @@ int liberar_inodo(unsigned int ninodo)
 	{
 		return -1;
 	}
-	// for (int i = SB.posPrimerBloqueMB; i <= SB.posPrimerInodoLibre; i++)
-	// {
-	// 	//incluir el inodo en la lista de inodos libres
-	// }
 	inodo.punterosDirectos[0] = SB.posPrimerInodoLibre;
 	SB.posPrimerInodoLibre = ninodo;
 	SB.cantInodosLibres++;
@@ -562,7 +565,6 @@ int liberar_inodo(unsigned int ninodo)
 	-Parámetros: número de inodo elegido, bloque lógico a partir del cual se empieza a liberar.
 	-Return: número de bloques liberados o -1 en caso de error.
 */
-
 int liberar_bloques_inodo(unsigned int ninodo, unsigned int nblogico)
 {
 	struct inodo inodo;
@@ -575,50 +577,53 @@ int liberar_bloques_inodo(unsigned int ninodo, unsigned int nblogico)
 	int salvar_inodo;
 
 	liberados = 0;
-	leer_inodo(ninodo, &inodo);
-	// if (inodo.tamEnBytesLog == 0) //fichero vacío
-	// 	return 0;
-	//obtenemos el último bloque lógico del inodo
-	// if (inodo.tamEnBytesLog % BLOCKSIZE == 0)
-	// {
-	// 	ultimoBL = inodo.tamEnBytesLog / BLOCKSIZE - 1;
-	// }
-	// else
-	// {
-	// 	ultimoBL = inodo.tamEnBytesLog / BLOCKSIZE;
-	// }
-	ultimoBL = DIRECTOS; // Para el test de prueba
+	if (leer_inodo(ninodo, &inodo) == -1)
+		return -1;
+	if (inodo.tamEnBytesLog == 0) //fichero vacío
+		return liberados;
+	// obtenemos el último bloque lógico del inodo
+	if (inodo.tamEnBytesLog % BLOCKSIZE == 0)
+	{
+		ultimoBL = inodo.tamEnBytesLog / BLOCKSIZE - 1;
+	}
+	else
+	{
+		ultimoBL = inodo.tamEnBytesLog / BLOCKSIZE;
+	}
 	memset(buffer_aux, 0, BLOCKSIZE);
 	ptr = 0;
-	fprintf(stderr, "[liberar_bloques_inodo()→primer BL: %u, último BL: %u]\n", nblogico, ultimoBL);
+	fprintf(stderr, "primer BL: %u, último BL: %u\n", nblogico, ultimoBL);
 	for (int nblog = nblogico; nblog <= ultimoBL; nblog++)
 	{
 		nRangoBL = obtener_nrangoBL(inodo, nblog, &ptr);
 		if (nRangoBL == -1)
 			return -1;
-		// /* 					MEJORA DEL ALGORITMO 1 DE 2.
-		// Se comprueban los valores de los punteros del inodo para saltar los bloques
-		// lógicos correspondientes (o terminar directamente) si no apuntan a nada */
-		// if (!ptr && nRangoBL == 1) //inodo.punterosIndirectos[0] == 0
-		// {
-		// 	nblog += NPUNTEROS - 1;
-		// 	continue;
-		// }
-		// else if (!ptr && nRangoBL == 2) //inodo.punterosIndirectos[1] == 0
-		// {
-		// 	nblog += NPUNTEROS * NPUNTEROS - 1;
-		// 	continue;
-		// }
-		// else if (!ptr && nRangoBL == 3) //inodo.punterosIndirectos[2] == 0
-		// {
-		// 	break;
-		// }
+		/* MEJORA DEL ALGORITMO 1 de 2.
+		Si uno de los punteros del inodo apunta a 0 se salta al siguiente rango.*/
+		if (!ptr)
+		{
+			if (nRangoBL == 1)
+			{
+				nblog = INDIRECTOS0 - 1;
+				continue;
+			}
+			else if (nRangoBL == 2)
+			{
+				nblog = INDIRECTOS1 - 1;
+				continue;
+			}
+			else if (nRangoBL == 3)
+			{
+				break;
+			}
+		}
 		nivel_punteros = nRangoBL; //el nivel_punteros más alto cuelga del inodo
 		while (ptr > 0 && nivel_punteros > 0)
 		{
 			bread(ptr, bloques_punteros[nivel_punteros - 1]);
 			indice = obtener_indice(nblog, nivel_punteros);
-			ptr_nivel[nivel_punteros - 1] = indice;
+			ptr_nivel[nivel_punteros - 1] = ptr;
+			indices[nivel_punteros - 1] = indice;
 			ptr = bloques_punteros[nivel_punteros - 1][indice];
 			nivel_punteros--;
 		}
@@ -630,6 +635,7 @@ int liberar_bloques_inodo(unsigned int ninodo, unsigned int nblogico)
 			if (nRangoBL == 0)
 			{
 				inodo.punterosDirectos[nblog] = 0;
+				salvar_inodo = 1;
 			}
 			else
 			{
@@ -642,8 +648,8 @@ int liberar_bloques_inodo(unsigned int ninodo, unsigned int nblogico)
 					{
 						//No cuelgan bloques ocupados, hay que liberar el bloque de punteros
 						liberar_bloque(ptr);
-						fprintf(stderr, "[liberar_bloques_inodo()→ liberado BF %d de punteros de nivel %d correspondiente al BL %d ]\n",
-								ptr, nivel_punteros, nblog);
+						fprintf(stderr, "[liberar_bloques_inodo()→ liberado BF %d de punteros de nivel %u correspondiente al BL %d ]\n",
+								ptr, nivel_punteros + 1, nblog);
 						liberados++;
 						nivel_punteros++;
 						if (nivel_punteros == nRangoBL)
@@ -651,35 +657,35 @@ int liberar_bloques_inodo(unsigned int ninodo, unsigned int nblogico)
 							inodo.punterosIndirectos[nRangoBL - 1] = 0;
 							salvar_inodo = 1;
 						}
-						else
-						{ //escribimos en el dispositivo el bloque de punteros modificado
-							bwrite(ptr, bloques_punteros[nivel_punteros]);
-							nivel_punteros = nRangoBL; // para salir del bucle
-						}
+					}
+					else
+					{ //escribimos en el dispositivo el bloque de punteros modificado
+						bwrite(ptr, bloques_punteros[nivel_punteros]);
+						nivel_punteros = nRangoBL; // para salir del bucle
 					}
 				}
 			}
 		}
-		// else if (ptr == 0)
-		// {
-		// 	/* MEJORA DEL ALGORITMO 2 DE 2.
-		// 	Se comprueba a qué nivel pertenece el puntero y se saltan los 
-		// 	bloques lógicos que no hacen falta comprobar.*/
-		// 	if (nivel_punteros == 1)
-		// 	{
-		// 		nblog += NPUNTEROS - 1;
-		// 	}
-		// 	else if (nivel_punteros == 2)
-		// 	{
-		// 		nblog += NPUNTEROS * NPUNTEROS - 1;
-		// 	}
-		// }
+		else if (ptr == 0)
+		{
+			/* MEJORA DEL ALGORITMO 2 de 2.
+			Se comprueba a qué nivel pertenece el puntero y se saltan los
+			bloques lógicos que no hacen falta comprobar.*/
+			if (nivel_punteros == 2)
+			{
+				nblog += NPUNTEROS - 1;
+			}
+			else if (nivel_punteros == 3)
+			{
+				nblog += (NPUNTEROS * NPUNTEROS) - 1;
+			}
+		}
 	}
 	if (salvar_inodo)
 	{
 		if (escribir_inodo(ninodo, inodo) == -1)
 			return -1;
 	}
-	fprintf(stderr, "[liberar_bloques_inodo()→ total bloques liberados: %d ]\n", liberados);
+	fprintf(stderr, "[liberar_bloques_inodo()→ total bloques liberados: %d ]\n\n", liberados);
 	return liberados;
 }

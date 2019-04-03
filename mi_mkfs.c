@@ -8,7 +8,7 @@ int main(int argc, char **argv)
     int ninodos;
     if (argc != 3)
     {
-        fprintf(stderr, "ERROR: ./mi_mkfs nombre_dispositivo n_bloques\n");
+        fprintf(stderr, "SINTAXIS: ./mi_mkfs nombre_dispositivo n_bloques\n");
         exit(EXIT_FAILURE);
     }
     strcpy(nombre_dispositivo, argv[1]);
