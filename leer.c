@@ -1,5 +1,5 @@
 #include "ficheros.h"
-#define tambuffer 8000
+#define tambuffer 1500
 
 int main(int argc, char const *argv[])
 {
