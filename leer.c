@@ -1,5 +1,5 @@
 #include "ficheros.h"
-#define tambuffer BLOCKSIZE
+#define tambuffer 8000
 
 int main(int argc, char const *argv[])
 {
@@ -29,10 +29,10 @@ int main(int argc, char const *argv[])
     memset(buffer_texto, 0, tambuffer);
     while ((leidos = mi_read_f(ninodo, buffer_texto, offset, tambuffer)) > 0)
     {
-        total_leidos += leidos;
         write(1, buffer_texto, leidos);
-        offset += tambuffer;
         memset(buffer_texto, 0, tambuffer);
+        total_leidos += leidos;
+        offset += tambuffer;
     }
     sprintf(string, "\ntotal_leidos %d\n", total_leidos);
     write(2, string, strlen(string));

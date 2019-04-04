@@ -113,6 +113,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
     }
     else // Más de un bloque involucrado
     {
+        desp2 = (ultimobyte % BLOCKSIZE);
         bfisico = traducir_bloque_inodo(ninodo, primerBLogico, 0);
         if (bfisico != -1)
         {
@@ -137,8 +138,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
         {
             if (bread(bfisico, buf_bloque) == -1)
                 return -1;
-            desp2 = ultimobyte % BLOCKSIZE;
-            memcpy(buf_original + leidos, buf_bloque + desp2, desp2 + 1);
+            memcpy(buf_original + leidos, buf_bloque, desp2 + 1);
         }
         leidos += desp2 + 1;
     }
