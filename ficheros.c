@@ -15,11 +15,11 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
     struct inodo inodo;
 
     if (leer_inodo(ninodo, &inodo) == -1)
-        return -1;
+        return 0;
     if ((inodo.permisos & 2) != 2)
     {
-        fprintf(stderr, "ERROR: permiso denegado de escritura\n");
-        return -1;
+        fprintf(stderr, "Error: Permiso denegado de escritura\n");
+        return 0;
     }
     primerBLogico = offset / BLOCKSIZE;
     ultimoBLogico = (offset + nbytes - 1) / BLOCKSIZE;
@@ -29,35 +29,35 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
     {
         bfisico = traducir_bloque_inodo(ninodo, primerBLogico, 1);
         if (bread(bfisico, buf_bloque) == -1)
-            return -1;
+            return 0;
         memcpy(buf_bloque + desp1, buf_original, nbytes);
         if (bwrite(bfisico, buf_bloque) == -1)
-            return -1;
+            return 0;
     }
     else // Más de un bloque involucrado
     {
         bfisico = traducir_bloque_inodo(ninodo, primerBLogico, 1);
         if (bread(bfisico, buf_bloque) == -1)
-            return -1;
+            return 0;
         memcpy(buf_bloque + desp1, buf_original, BLOCKSIZE - desp1);
         if (bwrite(bfisico, buf_bloque) == -1)
-            return -1;
+            return 0;
         for (int i = primerBLogico + 1; i < ultimoBLogico; i++)
         {
             bfisico = traducir_bloque_inodo(ninodo, i, 1);
             if (bwrite(bfisico, buf_original + (BLOCKSIZE - desp1) + (i - primerBLogico - 1) * BLOCKSIZE) == -1)
-                return -1;
+                return 0;
         }
         bfisico = traducir_bloque_inodo(ninodo, ultimoBLogico, 1);
         if (bread(bfisico, buf_bloque) == -1)
-            return -1;
+            return 0;
         desp2 = ultimobyte % BLOCKSIZE;
         memcpy(buf_bloque, buf_original + (nbytes - desp2 - 1), desp2 + 1);
         if (bwrite(bfisico, buf_bloque) == -1)
-            return -1;
+            return 0;
     }
     if (leer_inodo(ninodo, &inodo) == -1)
-        return -1;
+        return 0;
     inodo.mtime = time(NULL);
     if ((offset + nbytes) >= inodo.tamEnBytesLog)
     {
@@ -65,7 +65,7 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
         inodo.tamEnBytesLog = offset + nbytes;
     }
     if (escribir_inodo(ninodo, inodo) == -1)
-        return -1;
+        return 0;
     return nbytes;
 }
 /*  -Función: mi_read_f.
@@ -84,7 +84,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
         return -1;
     if ((inodo.permisos & 4) != 4)
     {
-        fprintf(stderr, "ERROR: permiso denegado de lectura\n");
+        fprintf(stderr, "Error: permiso denegado de lectura\n");
         return -1;
     }
     if (offset >= inodo.tamEnBytesLog)
@@ -208,7 +208,7 @@ int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
     }
     if ((inodo.permisos & 2) != 2)
     {
-        fprintf(stderr, "ERROR: permiso denegado de escritura\n");
+        fprintf(stderr, "Error: permiso denegado de escritura\n");
         return -1;
     }
     if ((nbytes % BLOCKSIZE) == 0)

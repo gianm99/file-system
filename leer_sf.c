@@ -1,4 +1,4 @@
-#include "ficheros_basico.h"
+#include "directorios.h"
 void datos_inodo(struct inodo inodo);
 int main(int argc, char const *argv[])
 {
