@@ -60,10 +60,10 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         //leer el primer bloque de entradas y mirarlas desde el buffer hasta acabar de leer el buffer
         if (mi_read_f(*p_inodo_dir, entradas, 0, BLOCKSIZE) == -1)
             return -1;
-        while ((nentrada < numentradas) && strcmp(inicial, entradas[nentrada].nombre))
+        while ((nentrada < numentradas) && strcmp(inicial, entradas[nentrada % (BLOCKSIZE/tamEntrada)].nombre))
         {
             nentrada++;
-            if ((nentrada % (BLOCKSIZE / tamEntrada)) == 0) // múltiplo del número de entradas en un bloque
+            if ((nentrada % (BLOCKSIZE / tamEntrada)) == 0 && nentrada < numentradas) // múltiplo del número de entradas en un bloque
             {
                 //leer el siguiente bloque de entradas
                 if (mi_read_f(*p_inodo_dir, entradas, nentrada * tamEntrada, BLOCKSIZE) == -1)
@@ -88,12 +88,12 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                 // fprintf(stderr, "[buscar_entrada()→ El inodo %d no tiene permisos de escritura]\n", *p_inodo_dir);
                 return ERROR_PERMISO_ESCRITURA;
             }
-            strcpy(entradas[nentrada].nombre, inicial);
+            strcpy(entradas[nentrada % (BLOCKSIZE/tamEntrada)].nombre, inicial);
             if (!strcmp(tipo, "DIRECTORIO")) //es un directorio
             {
                 if (!strcmp(final, "/"))
                 {
-                    entradas[nentrada].ninodo = reservar_inodo('d', permisos);
+                    entradas[nentrada % (BLOCKSIZE/tamEntrada)].ninodo = reservar_inodo('d', permisos);
                     // fprintf(stderr, "[buscar_entrada()→ entrada.nombre: %s, entrada.ninodo: %d]\n", entradas[nentrada].nombre, entradas[nentrada].ninodo);
                     // fprintf(stderr, "[buscar_entrada()→ reservado inodo %d tipo d con permisos %d]\n", entradas[nentrada].ninodo, permisos);
                 }
@@ -104,16 +104,16 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
             }
             else //es un fichero
             {
-                entradas[nentrada].ninodo = reservar_inodo('f', permisos);
+                entradas[nentrada % (BLOCKSIZE/tamEntrada)].ninodo = reservar_inodo('f', permisos);
                 // fprintf(stderr, "[buscar_entrada()→ entrada.nombre: %s, entrada.ninodo: %d]\n", entradas[nentrada].nombre, entradas[nentrada].ninodo);
                 // fprintf(stderr, "[buscar_entrada()→ reservado inodo %d tipo f con permisos %d]\n", entradas[nentrada].ninodo, permisos);
             }
             // if (mi_write_f(*p_inodo_dir, entradas, (nentrada / (BLOCKSIZE / tamEntrada)) * BLOCKSIZE, BLOCKSIZE) == -1)
-            if (mi_write_f(*p_inodo_dir, &entradas[nentrada], nentrada * tamEntrada, tamEntrada) == -1)
+            if (mi_write_f(*p_inodo_dir, &entradas[nentrada % (BLOCKSIZE/tamEntrada)], nentrada * tamEntrada, tamEntrada) == -1)
             {
-                if (entradas[nentrada].ninodo != -1)
+                if (entradas[nentrada % (BLOCKSIZE/tamEntrada)].ninodo != -1)
                 {
-                    liberar_inodo(entradas[nentrada].ninodo);
+                    liberar_inodo(entradas[nentrada % (BLOCKSIZE/tamEntrada)].ninodo);
                 }
                 return EXIT_FAILURE;
             }
@@ -125,13 +125,13 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         {
             return ERROR_ENTRADA_YA_EXISTENTE;
         }
-        *p_inodo = entradas[nentrada].ninodo;
+        *p_inodo = entradas[nentrada % (BLOCKSIZE/tamEntrada)].ninodo;
         *p_entrada = nentrada;
         return EXIT_SUCCESS;
     }
     else
     {
-        *p_inodo_dir = entradas[nentrada].ninodo;
+        *p_inodo_dir = entradas[nentrada%16].ninodo;
         return (buscar_entrada(final, p_inodo_dir, p_inodo, p_entrada, reservar, permisos));
     }
 }
@@ -234,7 +234,7 @@ int mi_dir(const char *camino, char *buffer)
             return -1;
         while (nentrada < numentradas)
         {
-            if (leer_inodo(entradas[nentrada].ninodo, &inodo) == -1)
+            if (leer_inodo(entradas[nentrada % (BLOCKSIZE/tamEntrada)].ninodo, &inodo) == -1)
                 return EXIT_FAILURE;
             // tipo de inodo
             if (inodo.tipo == 'f')
@@ -281,11 +281,11 @@ int mi_dir(const char *camino, char *buffer)
             // nombre de la entrada
             if (inodo.tipo == 'f')
             {
-                sprintf(nom, BOLD RED "%s\n" RESET, entradas[nentrada].nombre);
+                sprintf(nom, BOLD RED "%s\n" RESET, entradas[nentrada % (BLOCKSIZE/tamEntrada)].nombre);
             }
             else
             {
-                sprintf(nom, BOLD BLU "%s\n" RESET, entradas[nentrada].nombre);
+                sprintf(nom, BOLD BLU "%s\n" RESET, entradas[nentrada % (BLOCKSIZE/tamEntrada)].nombre);
             }
             strcat(buffer, nom);
             nentrada++;
