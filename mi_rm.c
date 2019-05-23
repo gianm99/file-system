@@ -3,7 +3,6 @@ int main(int argc, char const *argv[])
 {
     char nombre_dispositivo[1024];
     char ruta[1024];
-    int resultado;
 
     if (argc != 3)
     {
@@ -23,10 +22,10 @@ int main(int argc, char const *argv[])
         fprintf(stderr, "ERROR: falló bmount\n");
         exit(EXIT_FAILURE);
     }
-    resultado = mi_unlink(ruta);
-    if (resultado == EXIT_FAILURE)
+    if (mi_unlink(ruta) == -1)
     {
         fprintf(stderr, "ERROR: falló mi_unlink\n");
+        exit(EXIT_FAILURE);
     }
     if (bumount() == -1)
     {
