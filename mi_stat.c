@@ -23,7 +23,11 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
     strcpy(ruta, argv[2]);
-    mi_stat(ruta, &stat);
+    if (mi_stat(ruta, &stat) == -1)
+    {
+        fprintf(stderr, "ERROR: falló mi_stat\n");
+        exit(EXIT_FAILURE);
+    }
     // tipo de inodo
     printf("tipo: %c\n", stat.tipo);
     // permisos del inodo

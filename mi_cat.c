@@ -5,9 +5,9 @@ int main(int argc, char const *argv[])
 {
     char nombre_dispositivo[1024];
     char string[128];
-    char ruta[1024];
+    char camino[1024];
     char buffer_texto[readbuffer];
-    int offset, leidos, total_leidos, resultado;
+    int offset, leidos, total_leidos, error;
     struct STAT datos_inodo;
     unsigned int p_inodo_dir, p_inodo, p_entrada;
 
@@ -17,7 +17,7 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
     strcpy(nombre_dispositivo, argv[1]);
-    strcpy(ruta, argv[2]);
+    strcpy(camino, argv[2]);
     //comprueba que existe el disco
     if (access(nombre_dispositivo, F_OK) == -1)
     {
@@ -25,9 +25,9 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
     //comprueba que no es un directorio
-    if (ruta[strlen(ruta) - 1] == '/')
+    if (camino[strlen(camino) - 1] == '/')
     {
-        fprintf(stderr, "ERROR: ruta de directorio");
+        fprintf(stderr, "ERROR: camino de directorio");
         exit(EXIT_FAILURE);
     }
     if (bmount(nombre_dispositivo) == -1)
@@ -36,7 +36,7 @@ int main(int argc, char const *argv[])
     leidos = 0;
     total_leidos = 0;
     memset(buffer_texto, 0, readbuffer);
-    while ((leidos = mi_read(ruta, buffer_texto, offset, readbuffer)) > 0)
+    while ((leidos = mi_read(camino, buffer_texto, offset, readbuffer)) > 0)
     {
         write(1, buffer_texto, leidos);
         memset(buffer_texto, 0, readbuffer);
@@ -45,21 +45,11 @@ int main(int argc, char const *argv[])
     }
     sprintf(string, "\ntotal_leidos %d\n", total_leidos);
     write(2, string, strlen(string));
-    resultado = buscar_entrada(ruta, &p_inodo_dir, &p_inodo, &p_entrada, 0, 0);
-    // if(resultado != EXIT_SUCCESS)
-    //     return -1;
-    switch (resultado)
+    if ((error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0, 0)) != EXIT_SUCCESS)
     {
-    case ERROR_EXTRAER_CAMINO:
-        fprintf(stderr, "Error: Camino incorrecto\n");
-        exit(EXIT_FAILURE);
-        break;
-    case ERROR_PERMISO_LECTURA:
-        fprintf(stderr, "Error: Permiso denegado de lectura\n");
-        exit(EXIT_FAILURE);
-        break;
+        mostrar_error_buscar_entrada(error);
+        return -1;
     }
-
     if (mi_stat_f(p_inodo, &datos_inodo) == -1)
         exit(EXIT_FAILURE);
     sprintf(string, "tamEnBytesLog %d\n", datos_inodo.tamEnBytesLog);
