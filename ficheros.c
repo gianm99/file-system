@@ -27,7 +27,9 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
     ultimobyte = (offset + nbytes - 1);
     if (primerBLogico == ultimoBLogico) // Un solo bloque involucrado
     {
+        mi_waitSem();
         bfisico = traducir_bloque_inodo(ninodo, primerBLogico, 1);
+        mi_signalSem();
         if (bread(bfisico, buf_bloque) == -1)
             return 0;
         memcpy(buf_bloque + desp1, buf_original, nbytes);
@@ -36,7 +38,9 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
     }
     else // Más de un bloque involucrado
     {
+        mi_waitSem();
         bfisico = traducir_bloque_inodo(ninodo, primerBLogico, 1);
+        mi_signalSem();
         if (bread(bfisico, buf_bloque) == -1)
             return 0;
         memcpy(buf_bloque + desp1, buf_original, BLOCKSIZE - desp1);
@@ -44,11 +48,15 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
             return 0;
         for (int i = primerBLogico + 1; i < ultimoBLogico; i++)
         {
+            mi_waitSem();
             bfisico = traducir_bloque_inodo(ninodo, i, 1);
+            mi_signalSem();
             if (bwrite(bfisico, buf_original + (BLOCKSIZE - desp1) + (i - primerBLogico - 1) * BLOCKSIZE) == -1)
                 return 0;
         }
+        mi_waitSem();
         bfisico = traducir_bloque_inodo(ninodo, ultimoBLogico, 1);
+        mi_signalSem();
         if (bread(bfisico, buf_bloque) == -1)
             return 0;
         desp2 = ultimobyte % BLOCKSIZE;
@@ -56,6 +64,7 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
         if (bwrite(bfisico, buf_bloque) == -1)
             return 0;
     }
+    mi_waitSem();
     if (leer_inodo(ninodo, &inodo) == -1)
         return 0;
     inodo.mtime = time(NULL);
@@ -66,6 +75,7 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
     }
     if (escribir_inodo(ninodo, inodo) == -1)
         return 0;
+    mi_signalSem();
     return nbytes;
 }
 /*  -Función: mi_read_f.

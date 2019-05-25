@@ -1,7 +1,8 @@
 #include "ficheros_basico.h"
 
 /************************************************** NIVEL 1 **************************************************/
-
+static sem_t *mutex;
+static unsigned int inside_sc = 0;
 static int descriptor = 0;
 /*-Función: Bmount.
 **-Descripción: Monta el fichero que se utilizará como dispositivo virtual.
@@ -12,6 +13,7 @@ static int descriptor = 0;
 */
 int bmount(const char *camino)
 {
+   mutex = initSem();
    descriptor = open(camino, O_RDWR | O_CREAT, 0666);
    if (descriptor < 0)
    {
@@ -28,6 +30,7 @@ int bmount(const char *camino)
 */
 int bumount()
 {
+   deleteSem();
    if (close(descriptor) < 0)
    {
       fprintf(stderr, "ERROR %d: %s\n", errno, strerror(errno));
@@ -79,4 +82,22 @@ int bread(unsigned int nbloque, void *buf)
       return -1;
    }
    return nbytes;
+}
+
+void mi_waitSem()
+{
+   if (!inside_sc)
+   {
+      waitSem(mutex);
+   }
+   inside_sc++;
+}
+
+void mi_signalSem()
+{
+   inside_sc--;
+   if (!inside_sc)
+   {
+      signalSem(mutex);
+   }
 }
