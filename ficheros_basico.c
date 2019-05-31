@@ -148,7 +148,7 @@ int escribir_bit(unsigned int nbloque, unsigned int bit)
 		return -1;
 	}
 	posbyte = posbyte % BLOCKSIZE;
-	mascara >>= posbit;			  // desplazamiento de bits a la derecha
+	mascara >>= posbit;				// desplazamiento de bits a la derecha
 	bufferMB[posbyte] |= mascara; // operador OR para bits
 	if (bit == 1)
 	{
@@ -187,11 +187,11 @@ unsigned char leer_bit(unsigned int nbloque)
 	if (bread(nbloqueabs, bufferMB) == -1)
 		return 2;
 	posbyte = posbyte % BLOCKSIZE;
-	mascara >>= posbit;			  // desplazamiento de bits a la derecha
+	mascara >>= posbit;				// desplazamiento de bits a la derecha
 	mascara &= bufferMB[posbyte]; // operador AND para bits
-	mascara >>= (7 - posbit);	 // desplazamiento de bits a la derecha
+	mascara >>= (7 - posbit);		// desplazamiento de bits a la derecha
 	fprintf(stderr, "[leer_bit()→ nbloque: %d, posbyte:%d, posbit:%d, nbloqueMB:%d, nbloqueabs:%d)]\n",
-			nbloque, posbyte, posbit, nbloqueMB, nbloqueabs);
+			  nbloque, posbyte, posbit, nbloqueMB, nbloqueabs);
 	return mascara;
 }
 /*	-Función: reservar_bloque.
@@ -465,12 +465,12 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
 		{
 			if (reservar == 0) //error lectura bloque inexistente
 				return -1;
-			salvar_inodo = 1;		 //reservar bloques punteros y crear enlaces desde inodo hasta datos
+			salvar_inodo = 1;			 //reservar bloques punteros y crear enlaces desde inodo hasta datos
 			ptr = reservar_bloque(); //de punteros
-			if (ptr == -1)			 //error reservar_bloque
+			if (ptr == -1)				 //error reservar_bloque
 				return -1;
 			inodo.numBloquesOcupados++;
-			inodo.ctime = time(NULL);		//fecha actual
+			inodo.ctime = time(NULL);		  //fecha actual
 			if (nivel_punteros == nRangoBL) //el bloque cuelga directamente del inodo
 			{
 				inodo.punterosIndirectos[nRangoBL - 1] = ptr;
@@ -485,17 +485,17 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
 		if (bread(ptr, buffer) == -1)
 			return -1;
 		indice = obtener_indice(nblogico, nivel_punteros);
-		ptr_ant = ptr;		  //guardamos el puntero
+		ptr_ant = ptr;			 //guardamos el puntero
 		ptr = buffer[indice]; // y lo desplazamos al siguiente nivel
 		nivel_punteros--;
-	}			  //al salir de este bucle ya estamos al nivel de datos
+	}				  //al salir de este bucle ya estamos al nivel de datos
 	if (ptr == 0) //no existe bloque de datos
 	{
 		if (reservar == 0) //error lectura ∄ bloque
 			return -1;
 		salvar_inodo = 1;
 		ptr = reservar_bloque(); //de datos
-		if (ptr == -1)			 //error reservar_bloque
+		if (ptr == -1)				 //error reservar_bloque
 			return -1;
 		inodo.numBloquesOcupados++;
 		inodo.ctime = time(NULL);
@@ -556,9 +556,9 @@ int liberar_bloques_inodo(unsigned int ninodo, unsigned int nblogico)
 	unsigned int nRangoBL, nivel_punteros, indice, ptr, ultimoBL;
 	unsigned char buffer_aux[BLOCKSIZE];
 	int bloques_punteros[3][NPUNTEROS]; //array de bloques de punteros
-	int ptr_nivel[3];					//punteros a bloques de punteros de cada nivel
-	int indices[3];						//indices de cada nivel
-	int liberados;						//nº de bloques liberados
+	int ptr_nivel[3];							//punteros a bloques de punteros de cada nivel
+	int indices[3];							//indices de cada nivel
+	int liberados;								//nº de bloques liberados
 	int salvar_inodo;
 
 	liberados = 0;
