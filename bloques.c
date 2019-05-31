@@ -13,15 +13,26 @@ static int descriptor = 0;
 */
 int bmount(const char *camino)
 {
-   mutex = initSem();
-   descriptor = open(camino, O_RDWR | O_CREAT, 0666);
-   if (descriptor < 0)
+   if (descriptor > 0)
    {
-      fprintf(stderr, "ERROR %d: %s\n", errno, strerror(errno));
-      return -1;
+      close(descriptor);
+   }
+   if ((descriptor = open(camino, O_RDWR | O_CREAT, 0666)) == -1)
+   {
+      fprintf(stderr, "Error: bloques.c → bmount() → open()\n");
+   }
+   if (!mutex) //mutex == 0
+   {
+      //el semáforo es único y sólo se ha de inicializar una vez en nuestro sistema (lo hace el padre)
+      mutex = initSem(); //lo inicializa a 1
+      if (mutex == SEM_FAILED)
+      {
+         return -1;
+      }
    }
    return descriptor;
 }
+
 /*-Función: Bumount.
 **-Descripción: Desmonta el fichero creado con anterioridad.
 **-Parámetros: No recibe parámetros.
@@ -30,14 +41,17 @@ int bmount(const char *camino)
 */
 int bumount()
 {
-   deleteSem();
-   if (close(descriptor) < 0)
+   descriptor = close(descriptor);
+   // hay que asignar el resultado de la operación a la variable ya que bmount() la utiliza
+   if (descriptor == -1)
    {
-      fprintf(stderr, "ERROR %d: %s\n", errno, strerror(errno));
+      fprintf(stderr, "Error: bloques.c → bumount() → close(): %d: %s\n", errno, strerror(errno));
       return -1;
    }
+   deleteSem(); // borramos semaforo
    return 0;
 }
+
 /*-Función: bwrite
 **-Descripción: Escribe en uno de los bloques apuntados a la dirección que
 ** indica *buf.
