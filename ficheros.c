@@ -66,7 +66,10 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
    }
    mi_waitSem();
    if (leer_inodo(ninodo, &inodo) == -1)
+   {
+      mi_signalSem();
       return 0;
+   }
    inodo.mtime = time(NULL);
    if ((offset + nbytes) >= inodo.tamEnBytesLog)
    {
@@ -74,7 +77,10 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
       inodo.tamEnBytesLog = offset + nbytes;
    }
    if (escribir_inodo(ninodo, inodo) == -1)
+   {
+      mi_signalSem();
       return 0;
+   }
    mi_signalSem();
    return nbytes;
 }
@@ -152,11 +158,19 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
       }
       leidos += desp2 + 1;
    }
+   mi_waitSem();
    if (leer_inodo(ninodo, &inodo) == -1)
+   {
+      mi_signalSem();
       return -1;
+   }
    inodo.atime = time(NULL);
    if (escribir_inodo(ninodo, inodo) == -1)
+   {
+      mi_signalSem();
       return -1;
+   }
+   mi_signalSem();
    return leidos;
 }
 
@@ -191,12 +205,20 @@ int mi_stat_f(unsigned int ninodo, struct STAT *p_stat)
 int mi_chmod_f(unsigned int ninodo, unsigned char permisos)
 {
    struct inodo inodo;
+   mi_waitSem();
    if (leer_inodo(ninodo, &inodo) == -1)
+   {
+      mi_signalSem();
       return -1;
+   }
    inodo.permisos = permisos;
    inodo.ctime = time(NULL);
    if (escribir_inodo(ninodo, inodo) == -1)
+   {
+      mi_signalSem();
       return -1;
+   }
+   mi_signalSem();
    return 0;
 }
 

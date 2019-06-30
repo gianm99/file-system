@@ -34,42 +34,6 @@ int main(int argc, char const *argv[])
 	printf("cantInodosLibres = %d\n", SB.cantInodosLibres);
 	printf("totBloques = %d\n", SB.totBloques);
 	printf("totInodos = %d\n\n", SB.totInodos);
-
-	// /* RESERVA DE INODO Y TRADUCCION DE BLOQUES LOGICOS */
-	// ninodo = reservar_inodo('f', 6);
-	// if (ninodo == -1)
-	//     exit(EXIT_FAILURE);
-	// printf("INODO %d. TRADUCCION DE LOS BLOQUES LOGICOS 8, 204, 30.004, 400.004 y 16.843.019 \n\n", ninodo);
-	// if (traducir_bloque_inodo(ninodo, (unsigned int)8, 1) == -1)
-	//     exit(EXIT_FAILURE);
-	// if (traducir_bloque_inodo(ninodo, (unsigned int)204, 1) == -1)
-	//     exit(EXIT_FAILURE);
-	// if (traducir_bloque_inodo(ninodo, (unsigned int)30004, 1) == -1)
-	//     exit(EXIT_FAILURE);
-	// if (traducir_bloque_inodo(ninodo, (unsigned int)400004, 1) == -1)
-	//     exit(EXIT_FAILURE);
-	// if (traducir_bloque_inodo(ninodo, (unsigned int)16843019, 1) == -1)
-	//     exit(EXIT_FAILURE);
-	// puts("\n");
-	// printf("DATOS DEL INODO RESERVADO %d\n", ninodo);
-	// if (leer_inodo(ninodo, &inodo_reservado) == -1)
-	// {
-	//     fprintf(stderr, "ERROR: falló leer_inodo\n");
-	//     exit(EXIT_FAILURE);
-	// }
-	// datos_inodo(inodo_reservado);
-	// if (bread(posSB, &SB) == -1)
-	//     return -1;
-	// puts("\n");
-	// printf("SB.posPrimerInodoLibre = %d\n\n", SB.posPrimerInodoLibre);
-
-	// printf("LIBERAMOS EL INODO RESERVADO EN EL NIVEL ANTERIOR Y TODOS SUS BLOQUES\n");
-	// if (liberar_inodo(ninodo) == -1)
-	//     exit(EXIT_FAILURE);
-
-	// if (bread(posSB, &SB) == -1)
-	//     return -1;
-	// printf("SB.posPrimerInodoLibre = %d\n", SB.posPrimerInodoLibre);
 	if (bumount(nombre_dispositivo) == -1)
 		exit(EXIT_FAILURE);
 	return 0;
