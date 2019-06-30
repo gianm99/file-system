@@ -19,11 +19,6 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 	umask(0);
-	if (access(nombre_dispositivo, F_OK) == -1)
-	{
-		fprintf(stderr, "ERROR: No existe el archivo\n");
-		exit(EXIT_FAILURE);
-	}
 	if (bmount(nombre_dispositivo) == -1)
 	{
 		fprintf(stderr, "ERROR: falló bmount\n");
