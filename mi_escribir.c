@@ -1,5 +1,4 @@
 #include "directorios.h"
-#define writebuffer 1500
 
 int main(int argc, char const *argv[])
 {
@@ -15,7 +14,7 @@ int main(int argc, char const *argv[])
 	strcpy(nombre_dispositivo, argv[1]);
 	strcpy(ruta, argv[2]);
 	nbytes = strlen(argv[3]); //Longitud del texto
-	fprintf(stderr, "longitud del texto: %d\n", nbytes);
+	fprintf(stderr, "Longitud texto: %d\n", nbytes);
 	char buffer[nbytes]; //Buffer del texto
 	strcpy(buffer, argv[3]);
 	offset = atoi(argv[4]);

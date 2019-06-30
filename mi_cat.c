@@ -1,5 +1,5 @@
 #include "directorios.h"
-#define readbuffer 1500
+#define readbuffer 8000
 
 int main(int argc, char const *argv[])
 {
